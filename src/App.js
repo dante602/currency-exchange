@@ -58,8 +58,14 @@ function App() {
     // Firebase 초기화 및 인증 설정
     const initializeFirebase = async () => {
       try {
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        // process가 정의되어 있는지 먼저 확인하여 ReferenceError 방지
+        const firebaseConfig = (typeof process !== 'undefined' && process.env.REACT_APP_FIREBASE_CONFIG)
+          ? JSON.parse(process.env.REACT_APP_FIREBASE_CONFIG)
+          : null;
+        // __initial_auth_token은 Canvas 환경에서만 사용되므로, 배포 환경에서는 익명 인증을 사용합니다.
+        // const initialAuthToken = (typeof process !== 'undefined' && process.env.REACT_APP_INITIAL_AUTH_TOKEN)
+        //   ? process.env.REACT_APP_INITIAL_AUTH_TOKEN
+        //   : null;
 
         if (firebaseConfig) {
           const { initializeApp } = await import('firebase/app');
@@ -77,11 +83,8 @@ function App() {
             if (user) {
               setUserId(user.uid);
             } else {
-              if (initialAuthToken) {
-                await signInWithCustomToken(firebaseAuth, initialAuthToken);
-              } else {
-                await signInAnonymously(firebaseAuth);
-              }
+              // Canvas 외 환경에서는 익명 인증을 사용합니다.
+              await signInAnonymously(firebaseAuth);
             }
           });
         }
